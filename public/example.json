@@ -1,0 +1,88 @@
+[
+  {
+    "id": "KT001",
+    "type": "CIRCLE",
+    "text": "Key Terrain - Central Bridge over Põrnujõgi",
+    "coordinate": [58.589349, 25.028112],
+    "radius": "160",
+    "justification": "Chokepoint enabling control of movement between both riverbanks. Critical for maneuver, supply, and defense in depth."
+  },
+  {
+    "id": "KT002",
+    "type": "SYMBOL",
+    "text": "Key Terrain - Forested high ground WNW near Reinumurru",
+    "coordinate": [58.6075, 25.0025],
+    "justification": "Elevated, forested position overlooking western and central mobility corridors."
+  },
+  {
+    "id": "OBS001",
+    "type": "SYMBOL",
+    "text": "Observation Point - Open ridge NE of Venekuusiku",
+    "coordinate": [58.6115, 25.0555],
+    "justification": "Dominates NE sector with line of sight over Suurjõe–Kulimaa road and flanking terrain."
+  },
+  {
+    "id": "CC001",
+    "type": "POLYGON",
+    "text": "Cover and Concealment - Forest south of Jõesuu road",
+    "coordinates": [
+      [58.5850, 25.0155],
+      [58.5832, 25.0231],
+      [58.5809, 25.0198],
+      [58.5825, 25.0123]
+    ]
+  },
+  {
+    "id": "CC002",
+    "type": "POLYGON",
+    "text": "Cover and Concealment - Patch north of Suurjõe–Kulimaa",
+    "coordinates": [
+      [58.6060, 25.0325],
+      [58.6048, 25.0382],
+      [58.6025, 25.0345],
+      [58.6040, 25.0285]
+    ]
+  },
+  {
+    "id": "OBST001",
+    "type": "LINE",
+    "text": "Obstacle - Põrnujõgi River System",
+    "coordinates": [
+      [58.6100, 25.0660],
+      [58.6040, 25.0520],
+      [58.5960, 25.0410],
+      [58.589349, 25.028112],
+      [58.5810, 25.0100]
+    ]
+  },
+  {
+    "id": "AOA001",
+    "type": "ARROW",
+    "text": "Avenue of Approach - North to Center via 19242",
+    "coordinates": [
+      [58.6112, 25.0285],
+      [58.6018, 25.0275],
+      [58.589349, 25.028112]
+    ]
+  },
+  {
+    "id": "AOA002",
+    "type": "ARROW",
+    "text": "Avenue of Approach - W to E (Reinumurru to Jõesuu)",
+    "coordinates": [
+      [58.5890, 25.0000],
+      [58.589349, 25.028112],
+      [58.5896, 25.0450]
+    ]
+  },
+  {
+    "id": "AOA003",
+    "type": "ARROW",
+    "text": "Avenue of Approach - SE corridor via Vihtra",
+    "coordinates": [
+      [58.5830, 25.0320],
+      [58.5865, 25.0400],
+      [58.589349, 25.028112]
+    ]
+  }
+]
