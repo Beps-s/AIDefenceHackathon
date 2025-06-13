@@ -3,7 +3,9 @@ import { MapContainer, TileLayer, FeatureGroup, useMap } from "react-leaflet";
 import { EditControl } from "react-leaflet-draw";
 import "leaflet/dist/leaflet.css";
 import "leaflet-draw/dist/leaflet.draw.css";
-import MiniMapControl from "./MiniMapControl"; // make sure path is correct
+import MiniMapControl from "./MiniMapControl";
+import leafletImage from "leaflet-image";
+
 
 const MiniMapWrapper = () => {
     const map = useMap();
@@ -13,13 +15,46 @@ const MiniMapWrapper = () => {
 const MapDrawRectangle = () => {
     const featureGroupRef = useRef(null);
     const [geoJson, setGeoJson] = useState(null);
+    const [croppedImage, setCroppedImage] = useState(null);
 
     const handleCreated = (e) => {
         const { layer } = e;
         const drawnItems = featureGroupRef.current;
         drawnItems.clearLayers();
         drawnItems.addLayer(layer);
-        setGeoJson(layer.toGeoJSON());
+        const geoJson = layer.toGeoJSON();
+        setGeoJson(geoJson);
+
+        const bounds = layer.getBounds();
+        const map = layer._map;
+        leafletImage(map, function (err, canvas) {
+            if (err) {
+                return;
+            }
+
+            const topLeft = map.latLngToContainerPoint(bounds.getNorthWest());
+            const bottomRight = map.latLngToContainerPoint(bounds.getSouthEast());
+
+            const width = bottomRight.x - topLeft.x;
+            const height = bottomRight.y - topLeft.y;
+
+            // Create an offscreen canvas to crop the selected area
+            const croppedCanvas = document.createElement("canvas");
+            croppedCanvas.width = width;
+            croppedCanvas.height = height;
+
+            const ctx = croppedCanvas.getContext("2d");
+            ctx.drawImage(
+                canvas,
+                topLeft.x, topLeft.y, width, height, // source
+                0, 0, width, height                  // destination
+            );
+
+            const croppedImageDataURL = croppedCanvas.toDataURL("image/png");
+
+            console.log("🖼️ Cropped Image Data URL:", croppedImageDataURL);
+            setCroppedImage(croppedImageDataURL);
+        });
     };
 
 
