@@ -5,7 +5,7 @@ import "leaflet/dist/leaflet.css";
 import "leaflet-draw/dist/leaflet.draw.css";
 import MiniMapControl from "./MiniMapControl";
 import leafletImage from "leaflet-image";
-
+import L from "leaflet";
 
 const MiniMapWrapper = () => {
     const map = useMap();
@@ -16,6 +16,7 @@ const MapDrawRectangle = () => {
     const featureGroupRef = useRef(null);
     const [geoJson, setGeoJson] = useState(null);
     const [croppedImage, setCroppedImage] = useState(null);
+    const [imageSize, setImageSize] = useState(null);
 
     const handleCreated = (e) => {
         const { layer } = e;
@@ -27,6 +28,7 @@ const MapDrawRectangle = () => {
 
         const bounds = layer.getBounds();
         const map = layer._map;
+
         leafletImage(map, function (err, canvas) {
             if (err) {
                 return;
@@ -38,7 +40,6 @@ const MapDrawRectangle = () => {
             const width = bottomRight.x - topLeft.x;
             const height = bottomRight.y - topLeft.y;
 
-            // Create an offscreen canvas to crop the selected area
             const croppedCanvas = document.createElement("canvas");
             croppedCanvas.width = width;
             croppedCanvas.height = height;
@@ -46,21 +47,133 @@ const MapDrawRectangle = () => {
             const ctx = croppedCanvas.getContext("2d");
             ctx.drawImage(
                 canvas,
-                topLeft.x, topLeft.y, width, height, // source
-                0, 0, width, height                  // destination
+                topLeft.x,
+                topLeft.y,
+                width,
+                height,
+                0,
+                0,
+                width,
+                height
             );
 
-            const croppedImageDataURL = croppedCanvas.toDataURL("image/png");
+            // --- Draw grid lines every 2000 meters ---
+            const coords = geoJson.geometry.coordinates[0];
+            const lats = coords.map((c) => c[1]);
+            const lngs = coords.map((c) => c[0]);
 
-            console.log("🖼️ Cropped Image Data URL:", croppedImageDataURL);
+            const minLat = Math.min(...lats);
+            const maxLat = Math.max(...lats);
+            const minLng = Math.min(...lngs);
+            const maxLng = Math.max(...lngs);
+
+            const crs = map.options.crs;
+
+            const southWest = crs.project(L.latLng(minLat, minLng));
+            const northEast = crs.project(L.latLng(maxLat, maxLng));
+
+            const spacing = 2000; // meters grid spacing
+
+            // Vertical lines at every spacing meters (x values)
+            const verticalLines = [];
+            for (let x = southWest.x; x <= northEast.x; x += spacing) {
+                verticalLines.push(x);
+            }
+
+            // Horizontal lines at every spacing meters (y values)
+            const horizontalLines = [];
+            for (let y = southWest.y; y <= northEast.y; y += spacing) {
+                horizontalLines.push(y);
+            }
+
+            // Convert vertical lines to latLng pairs (bottom to top)
+            const verticalLatLngLines = verticalLines.map((x) => [
+                crs.unproject(L.point(x, southWest.y)),
+                crs.unproject(L.point(x, northEast.y)),
+            ]);
+
+            // Convert horizontal lines to latLng pairs (left to right)
+            const horizontalLatLngLines = horizontalLines.map((y) => [
+                crs.unproject(L.point(southWest.x, y)),
+                crs.unproject(L.point(northEast.x, y)),
+            ]);
+
+            // Helper: convert latLng line to pixel points relative to crop
+            function latLngLineToPixel(line) {
+                return line.map((latlng) => map.latLngToContainerPoint(latlng));
+            }
+
+            const verticalPixelLines = verticalLatLngLines.map((line) => {
+                const pts = latLngLineToPixel(line);
+                return pts.map((p) => ({ x: p.x - topLeft.x, y: p.y - topLeft.y }));
+            });
+
+            const horizontalPixelLines = horizontalLatLngLines.map((line) => {
+                const pts = latLngLineToPixel(line);
+                return pts.map((p) => ({ x: p.x - topLeft.x, y: p.y - topLeft.y }));
+            });
+
+            // Draw grid lines
+            ctx.strokeStyle = "rgba(0,0,0,0.5)";
+            ctx.lineWidth = 1;
+
+            verticalPixelLines.forEach((line) => {
+                ctx.beginPath();
+                ctx.moveTo(line[0].x, line[0].y);
+                ctx.lineTo(line[1].x, line[1].y);
+                ctx.stroke();
+            });
+
+            horizontalPixelLines.forEach((line) => {
+                ctx.beginPath();
+                ctx.moveTo(line[0].x, line[0].y);
+                ctx.lineTo(line[1].x, line[1].y);
+                ctx.stroke();
+            });
+
+            // --- Draw coordinates at grid intersections ---
+            ctx.fillStyle = "black";
+            ctx.font = "10px Arial";
+            ctx.textAlign = "left";
+            ctx.textBaseline = "top";
+
+            verticalLines.forEach((xMeter) => {
+                horizontalLines.forEach((yMeter) => {
+                    const latLng = crs.unproject(L.point(xMeter, yMeter));
+                    const point = map.latLngToContainerPoint(latLng);
+                    const px = point.x - topLeft.x;
+                    const py = point.y - topLeft.y;
+                    const label = `${latLng.lat.toFixed(4)}, ${latLng.lng.toFixed(4)}`;
+                    ctx.fillText(label, px + 3, py + 3);
+                });
+            });
+
+            // --- End coordinate labels ---
+
+            const croppedImageDataURL = croppedCanvas.toDataURL("image/png");
             setCroppedImage(croppedImageDataURL);
+
+            // Get pixel size of cropped image
+            const img = new Image();
+            img.onload = () => {
+                setImageSize({ width: img.naturalWidth, height: img.naturalHeight });
+            };
+            img.src = croppedImageDataURL;
         });
     };
 
-
     return (
         <div style={{ height: "100vh", width: "100vw" }}>
-            <h2 style={{ position: "absolute", zIndex: 1000, margin: 10, background: "white", padding: "0.5em", borderRadius: "4px" }}>
+            <h2
+                style={{
+                    position: "absolute",
+                    zIndex: 1000,
+                    margin: 10,
+                    background: "white",
+                    padding: "0.5em",
+                    borderRadius: "4px",
+                }}
+            >
                 Draw a Rectangle
             </h2>
             <MapContainer
@@ -101,20 +214,61 @@ const MapDrawRectangle = () => {
                 </FeatureGroup>
                 <MiniMapWrapper />
             </MapContainer>
-            <pre style={{
-                position: "absolute",
-                bottom: 10,
-                left: 10,
-                zIndex: 1000,
-                maxWidth: "30vw",
-                maxHeight: "30vh",
-                overflow: "auto",
-                background: "#f4f4f4",
-                padding: "1em",
-                borderRadius: "4px"
-            }}>
+
+            <pre
+                style={{
+                    position: "absolute",
+                    bottom: 10,
+                    left: 10,
+                    zIndex: 1000,
+                    maxWidth: "30vw",
+                    maxHeight: "30vh",
+                    overflow: "auto",
+                    background: "#f4f4f4",
+                    padding: "1em",
+                    borderRadius: "4px",
+                }}
+            >
                 {geoJson ? JSON.stringify(geoJson, null, 2) : "Draw a rectangle to get GeoJSON here."}
             </pre>
+
+            {imageSize && (
+                <div
+                    style={{
+                        position: "absolute",
+                        bottom: 80,
+                        left: 10,
+                        zIndex: 1000,
+                        background: "rgba(255,255,255,0.8)",
+                        padding: "0.5em 1em",
+                        borderRadius: "4px",
+                        fontSize: "14px",
+                    }}
+                >
+                    Cropped Image Size: {imageSize.width} x {imageSize.height} px
+                </div>
+            )}
+
+            {croppedImage && (
+                <a
+                    href={croppedImage}
+                    download="cropped-map.png"
+                    style={{
+                        position: "absolute",
+                        bottom: 10,
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        background: "#007bff",
+                        color: "white",
+                        padding: "0.5em 1em",
+                        borderRadius: "6px",
+                        textDecoration: "none",
+                        zIndex: 1000,
+                    }}
+                >
+                    Download Cropped Image
+                </a>
+            )}
         </div>
     );
 };
