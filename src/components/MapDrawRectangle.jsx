@@ -15,7 +15,11 @@ import MiniMapControl from "./MiniMapControl";
 import leafletImage from "leaflet-image";
 import SymbolMarker from "./extended/SymbolMarker";
 import MilitaryAttackArrow from "./extended/MilitaryAttackArrow";
-import { postQuery, constructQuery, snapJsonCoordinates } from "../api/overpassApi.ts";
+import {
+  postQuery,
+  constructQuery,
+  snapJsonCoordinates,
+} from "../api/overpassApi.ts";
 import { centroid, getRandomPointsInPolygon } from "../util.ts";
 import exampleData from "../assets/example.json";
 import openaiApi from "../api/openaiApi.ts";
@@ -33,10 +37,9 @@ const MapDrawRectangle = () => {
   const featureGroupRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [geoJson, setGeoJson] = useState(null);
-  const [queryData, setQueryData] = useState(null);
+  const [roadData, setRoadData] = useState(null);
   const [croppedImage, setCroppedImage] = useState(null);
   const [imageSize, setImageSize] = useState(null);
-  const [imageSizeCoord, setImageSizeCoord] = useState(null);
   const [featureData, setFeatureData] = useState(null);
   const [aiResponse, setAIResponse] = useState(null);
 
@@ -50,7 +53,7 @@ const MapDrawRectangle = () => {
   const getRoadData = async () => {
     if (geoJson) {
       setLoading(true);
-      setFeatureData(exampleData);
+      //setFeatureData(exampleData);
       let string = "";
       geoJson.geometry.coordinates[0].map((group) => {
         string += ` ${group[1]}`;
@@ -58,7 +61,7 @@ const MapDrawRectangle = () => {
       });
 
       const response = await postQuery(constructQuery(string));
-      setQueryData(response);
+      setRoadData(response);
       setLoading(false);
       featureGroupRef.current.clearLayers();
     }
@@ -67,20 +70,22 @@ const MapDrawRectangle = () => {
   useEffect(() => {
     if (croppedImage && imageSize) {
       //const randomHeightPoints = meteoApi.getElevetion(getRandomPointsInPolygon(geoJson.geometry.coordinates, 4));
-      //apiRequest();
+      apiRequest();
     }
   }, [croppedImage, imageSize]);
 
   // on geojson state change
   useEffect(() => {
-    if (geoJson) {
+    if (geoJson && !roadData) {
       getRoadData();
-      //setFeatureData(response);
     }
-  }, [geoJson]);
+
+    if (aiResponse) {
+      setFeatureData(aiResponse);
+    }
+  }, [geoJson, aiResponse]);
 
   const parseTacticalJson = () => {
-    
     const features = [];
     featureData.map((feature, index) => {
       if (feature.type === "LINE" || feature.type === "ARROW")
@@ -150,15 +155,6 @@ const MapDrawRectangle = () => {
     const geoJson = layer.toGeoJSON();
     setGeoJson(geoJson);
 
-    const coordinates = geoJson.geometry.coordinates[0];
-
-    const lats = coordinates.map(([lng, lat]) => lat);
-    const lngs = coordinates.map(([lng, lat]) => lng);
-
-    const topLeft = [Math.min(...lngs), Math.max(...lats)];
-    const bottomRight = [Math.max(...lngs), Math.min(...lats)];
-    setImageSizeCoord({ topLeft, bottomRight });
-
     const bounds = layer.getBounds();
     const map = layer._map;
 
@@ -204,19 +200,27 @@ const MapDrawRectangle = () => {
 
   return (
     <div style={{ height: "100vh", width: "100vw" }}>
-      { !queryData ? <h2
-        style={{
-          zIndex: 1000,
-          background: "white",
-          padding: "0.5em",
-          borderRadius: "4px",
-          boxShadow: "0 0 8px black",
-          margin: "auto",
-          textAlign: "center",
-        }}
-      >
-        {loading ? "Analyzing..." : "Select an area"}
-      </h2> : null }
+      {!roadData ? (
+        <div style={{
+            width: "100%",
+            position: "absolute",
+            display: "flex",
+            justifyContent: "center",
+        }}>
+        <h2
+          style={{
+            zIndex: 1000,
+            background: "white",
+            padding: "0.5em",
+            borderRadius: "4px",
+            boxShadow: "0 0 8px black",
+            textAlign: "center",
+          }}
+        >
+          {loading ? "Analyzing..." : "Select an area"}
+        </h2>
+        </div>
+      ) : null}
       <MapContainer
         loading={loading}
         zoom={14}
@@ -237,7 +241,7 @@ const MapDrawRectangle = () => {
           minZoom={14}
           maxZoom={16}
         />
-        {(featureData) ? parseTacticalJson() : null}
+        {featureData ? parseTacticalJson() : null}
         <FeatureGroup ref={featureGroupRef}>
           <EditControl
             position="topright"
@@ -258,7 +262,7 @@ const MapDrawRectangle = () => {
         </FeatureGroup>
         <MiniMapWrapper />
       </MapContainer>
-
+      {/*
       <pre
         style={{
           position: "absolute",
@@ -277,6 +281,7 @@ const MapDrawRectangle = () => {
           ? JSON.stringify(geoJson, null, 2)
           : "Draw a rectangle to get GeoJSON here."}
       </pre>
+      */}
 
       {imageSize && (
         <div
