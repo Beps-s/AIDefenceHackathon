@@ -4,10 +4,10 @@ async function getResponse(croppedImage, imageSize: {width: number, height: numb
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer `,
+        Authorization: `Bearer`,
       },
       body: JSON.stringify({
-        model: "gpt-4.1-mini",
+        model: "o3",
         input: [
           {
             role: "system",
@@ -94,6 +94,7 @@ async function getResponse(croppedImage, imageSize: {width: number, height: numb
               {
                 type: "input_image",
                 image_url: `${croppedImage}`,
+                detail: `high`,
               },
             ],
           },
@@ -106,10 +107,10 @@ async function getResponse(croppedImage, imageSize: {width: number, height: numb
     const data = await response.json();
 
     console.log("API response:", data);
-    const mapData = data.output[0].content[0].text;
+    const mapData = JSON.parse(data.output[1].content[0].text.replace("```json", "").replace("```", ""));
     console.log("API response:", mapData);
 
-    return data;
+    return mapData;
   } catch (error) {
     console.error("API request failed:", error);
     throw error;
