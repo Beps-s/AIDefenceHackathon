@@ -114,13 +114,13 @@ const MapDrawRectangle = () => {
         features.push(
           <Circle
             key={`${index} ${feature.text}`}
-            center={feature.coordinate}
+            center={feature.coordinates}
             radius={feature.radius}
             text="test"
           >
             {feature.symbol ? (
               <SymbolMarker
-                position={feature.coordinate}
+                position={feature.coordinates}
                 code={feature.symbol}
               />
             ) : null}
