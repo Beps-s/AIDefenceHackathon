@@ -1,4 +1,4 @@
-import { LatLngLiteral } from "leaflet";
+import { LatLngExpression, LatLngLiteral } from "leaflet";
 import GeometryUtil from "leaflet-geometryutil";
 
 export function anglePointWithDistance(
@@ -44,16 +44,20 @@ export function centroid (arr) {
     }, [0,0]) 
 }
 
-export function getNearestPoint(map, points: LatLngLiteral[], point: LatLngLiteral): LatLngLiteral {
-  let nearestPoint: LatLngLiteral = points[0];
-  let oldDistance: number = 0;
-  points.map(nextPoint => {
-    const distance = GeometryUtil.distance(map, point, nextPoint);
-    if (distance < oldDistance) {
-      oldDistance = distance;
-      nearestPoint = nextPoint;
-    }
-  })
+export function getNearestPointViaElementsArray(map, elements: any[], point: LatLngExpression): LatLngLiteral {
+  let nearestPoint: LatLngLiteral = elements[0].geometry[0];
+  let oldDistance: number = GeometryUtil.distance(map, point, nearestPoint);
 
-  return nearestPoint;
+  elements.map(element => {
+    element.geometry.map(nextPoint => {
+      const distance = GeometryUtil.distance(map, point, nextPoint);
+      if (distance < oldDistance) {
+        oldDistance = distance;
+        nearestPoint = nextPoint;
+      }
+    })
+  })
+  
+  
+  return { lat: nearestPoint.lat, lng: nearestPoint.lon};
 }

@@ -5,7 +5,7 @@ import L from "leaflet";
 
 
 const SymbolMarker = ({ position, text, code }) => {
-  const symbol = new ms.Symbol((code) ? code : "13031200000000000000", {
+  const symbol = new ms.Symbol((code) ? code : "130325000013010000000000000000", {
     size: 24,
   }).asSVG();
 

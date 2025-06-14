@@ -1,3 +1,6 @@
+import { LatLngLiteral, LatLngTuple } from "leaflet";
+import { getNearestPointViaElementsArray } from "../util.ts";
+
 const timeout = 120;
 const maxSize = 2073741824;
 
@@ -22,9 +25,7 @@ export const constructQuery = (boundary: string): string => {
   const query = `
   [out:json][maxsize:${maxSize}][timeout:${timeout}];
   (
-    way["highway"="tertiary"](poly:"${boundary}");
-    way["natural"="water"]["water"="lake"](poly:"${boundary}");
-    relation["natural"="water"]["water"="lake"](poly:"${boundary}");
+    ${QueryTypes.tertiary}(poly:"${boundary}");
   );
   out geom;
   `;
@@ -32,13 +33,13 @@ export const constructQuery = (boundary: string): string => {
   return query;
 };
 
-export const postQuery = async (query: string): Promise<QueryResponse> => {
-  
+export const postQuery = async (query: string): Promise<any> => {
+  console.time("Query Time");
+  /*
   console.group("Overpass Query");
   console.warn("Started Query");
   console.debug(query);
-  console.time();
-  
+  */
 
   var result = await fetch("https://overpass-api.de/api/interpreter", {
     method: "POST",
@@ -46,13 +47,26 @@ export const postQuery = async (query: string): Promise<QueryResponse> => {
     body: "data=" + encodeURIComponent(query),
   }).then((data) => data.json());
 
-  
   console.timeEnd();
+  /*
   console.log(JSON.stringify(result, null, 2));
   console.groupEnd();
-  
+  */
 
-  return {
-    queryResponse: JSON.stringify(result, null, 2),
-  };
+  return result;
+};
+
+export const snapJsonCoordinates = (
+  map,
+  geoData: any,
+  coordinates: LatLngTuple[]
+): LatLngTuple[] => {
+  let snappedPoints: LatLngTuple[] = [];
+
+  coordinates.map((coordinate) => {
+    const fixedPoint = getNearestPointViaElementsArray(map, geoData.elements, coordinate);
+    snappedPoints.push([fixedPoint.lat, fixedPoint.lng]);
+  });
+
+  return snappedPoints;
 };

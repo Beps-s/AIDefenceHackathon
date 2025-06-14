@@ -7,6 +7,7 @@ import {
   Circle,
   Tooltip,
   Polygon,
+  Polyline,
 } from "react-leaflet";
 import { EditControl } from "react-leaflet-draw";
 import "leaflet/dist/leaflet.css";
@@ -16,7 +17,7 @@ import leafletImage from "leaflet-image";
 import L from "leaflet";
 import SymbolMarker from "./extended/SymbolMarker";
 import MilitaryAttackArrow from "./extended/MilitaryAttackArrow";
-import { postQuery, constructQuery } from "../api/overpassApi.ts";
+import { postQuery, constructQuery, snapJsonCoordinates } from "../api/overpassApi.ts";
 import { centroid } from "../util.ts";
 import exampleData from "../assets/example.json";
 
@@ -26,6 +27,7 @@ const MiniMapWrapper = () => {
 };
 
 const MapDrawRectangle = () => {
+  const [map, setMap] = useState(null);
   const [loading, setLoading] = useState(false);
   const featureGroupRef = useRef(null);
   const [geoJson, setGeoJson] = useState(null);
@@ -165,7 +167,7 @@ Use geographic and tactical terminology with precision. Minimize textual explana
       });
 
       const response = await postQuery(constructQuery(string));
-      setQueryData(response.queryResponse);
+      setQueryData(response);
     }
   };
 
@@ -185,7 +187,7 @@ Use geographic and tactical terminology with precision. Minimize textual explana
         features.push(
           <MilitaryAttackArrow
             key={`${index} ${feature.text}`}
-            positions={feature.coordinates}
+            positions={snapJsonCoordinates(map, queryData, feature.coordinates)}
             weight={0.5}
             text={feature.text}
           />
@@ -412,6 +414,7 @@ Use geographic and tactical terminology with precision. Minimize textual explana
         maxBoundsViscosity={1.0}
         minZoom={14}
         maxZoom={16}
+        ref={setMap}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -419,7 +422,7 @@ Use geographic and tactical terminology with precision. Minimize textual explana
           minZoom={14}
           maxZoom={16}
         />
-        {parseTacticalJson()}
+        {(queryData) ? parseTacticalJson() : null}
         <FeatureGroup ref={featureGroupRef}>
           <EditControl
             position="topright"
