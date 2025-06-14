@@ -19,6 +19,9 @@ import { postQuery, constructQuery, snapJsonCoordinates } from "../api/overpassA
 import { centroid } from "../util.ts";
 import exampleData from "../assets/example.json";
 import openaiApi from "../api/openaiApi.ts";
+import meteoApi from "../api/meteoApi.ts";
+
+//const elevation = meteoApi.getElevetion([58.6315855, 25.020831]);
 
 const MiniMapWrapper = () => {
   const map = useMap();
