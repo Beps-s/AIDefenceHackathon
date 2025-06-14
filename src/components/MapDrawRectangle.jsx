@@ -34,6 +34,7 @@ const MapDrawRectangle = () => {
   const [queryData, setQueryData] = useState(null);
   const [croppedImage, setCroppedImage] = useState(null);
   const [imageSize, setImageSize] = useState(null);
+  const [imageSizeCoord, setImageSizeCoord] = useState(null);
   const [featureData, setFeatureData] = useState(null);
 
   const getRoadData = async () => {
@@ -117,6 +118,15 @@ const MapDrawRectangle = () => {
     drawnItems.addLayer(layer);
     const geoJson = layer.toGeoJSON();
     setGeoJson(geoJson);
+
+    const coordinates = geoJson.geometry.coordinates[0];
+
+    const lats = coordinates.map(([lng, lat]) => lat);
+    const lngs = coordinates.map(([lng, lat]) => lng);
+
+    const topLeft = [Math.min(...lngs), Math.max(...lats)];
+    const bottomRight = [Math.max(...lngs), Math.min(...lats)];
+    setImageSizeCoord({ topLeft, bottomRight });
 
     const bounds = layer.getBounds();
     const map = layer._map;
