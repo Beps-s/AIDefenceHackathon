@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, createRef } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -30,25 +30,27 @@ const MiniMapWrapper = () => {
 
 const MapDrawRectangle = () => {
   const [map, setMap] = useState(null);
-  const [loading, setLoading] = useState(false);
   const featureGroupRef = useRef(null);
+  const [loading, setLoading] = useState(false);
   const [geoJson, setGeoJson] = useState(null);
   const [queryData, setQueryData] = useState(null);
   const [croppedImage, setCroppedImage] = useState(null);
   const [imageSize, setImageSize] = useState(null);
   const [imageSizeCoord, setImageSizeCoord] = useState(null);
   const [featureData, setFeatureData] = useState(null);
-  const [response, setResponse] = useState(null);
+  const [aiResponse, setAIResponse] = useState(null);
 
   const apiRequest = async () => {
     setLoading(true);
-    const response2 = await openaiApi.getResponse(croppedImage, imageSize);
-    setResponse(response2);
+    const response = await openaiApi.getResponse(croppedImage, imageSize);
+    setAIResponse(response);
     setLoading(false);
   };
 
   const getRoadData = async () => {
     if (geoJson) {
+      setLoading(true);
+      setFeatureData(exampleData);
       let string = "";
       geoJson.geometry.coordinates[0].map((group) => {
         string += ` ${group[1]}`;
@@ -57,6 +59,8 @@ const MapDrawRectangle = () => {
 
       const response = await postQuery(constructQuery(string));
       setQueryData(response);
+      setLoading(false);
+      featureGroupRef.current.clearLayers();
     }
   };
 
@@ -71,12 +75,12 @@ const MapDrawRectangle = () => {
   useEffect(() => {
     if (geoJson) {
       getRoadData();
-      setFeatureData(response);
+      //setFeatureData(response);
     }
   }, [geoJson]);
 
   const parseTacticalJson = () => {
-    if (featureData == null) return;
+    
     const features = [];
     featureData.map((feature, index) => {
       if (feature.type === "LINE" || feature.type === "ARROW")
@@ -200,20 +204,19 @@ const MapDrawRectangle = () => {
 
   return (
     <div style={{ height: "100vh", width: "100vw" }}>
-      <h2
+      { !queryData ? <h2
         style={{
-          position: "absolute",
           zIndex: 1000,
-          margin: 10,
           background: "white",
           padding: "0.5em",
           borderRadius: "4px",
           boxShadow: "0 0 8px black",
-          marginLeft: "40%",
+          margin: "auto",
+          textAlign: "center",
         }}
       >
-        Select an area
-      </h2>
+        {loading ? "Analyzing..." : "Select an area"}
+      </h2> : null }
       <MapContainer
         loading={loading}
         zoom={14}
@@ -234,7 +237,7 @@ const MapDrawRectangle = () => {
           minZoom={14}
           maxZoom={16}
         />
-        {(response) ? parseTacticalJson() : null}
+        {(featureData) ? parseTacticalJson() : null}
         <FeatureGroup ref={featureGroupRef}>
           <EditControl
             position="topright"

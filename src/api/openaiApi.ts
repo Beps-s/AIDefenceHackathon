@@ -1,4 +1,5 @@
 async function getResponse(croppedImage, imageSize: {width: number, height: number}) {
+  console.time("OpenAI api - response time");
   try {
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
@@ -109,6 +110,8 @@ async function getResponse(croppedImage, imageSize: {width: number, height: numb
     console.log("API response:", data);
     const mapData = JSON.parse(data.output[1].content[0].text.replace("```json", "").replace("```", ""));
     console.log("API response:", mapData);
+
+    console.timeEnd("OpenAI api - response time");
 
     return mapData;
   } catch (error) {

@@ -25,7 +25,7 @@ export const constructQuery = (boundary: string): string => {
   const query = `
   [out:json][maxsize:${maxSize}][timeout:${timeout}];
   (
-    way["highway"="tertiary"](poly:"${boundary}");
+    way["highway"~"^(motorway|trunk|pedestrian|primary|secondary|tertiary|unclassified|service|residential|living_street)$"](poly:"${boundary}");
   );
   out geom;
   `;
@@ -34,7 +34,8 @@ export const constructQuery = (boundary: string): string => {
 };
 
 export const postQuery = async (query: string): Promise<any> => {
-  console.time("Query Time");
+  console.time("Overpass api - query time");
+  
   /*
   console.group("Overpass Query");
   console.warn("Started Query");
@@ -51,7 +52,7 @@ export const postQuery = async (query: string): Promise<any> => {
     return null;
   });
 
-  console.timeEnd();
+  console.timeEnd("Overpass api - query time");
 
   /*
   console.log(JSON.stringify(result, null, 2));
