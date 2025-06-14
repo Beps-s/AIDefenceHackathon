@@ -1,0 +1,76 @@
+[
+  {
+    "id": "KT001",
+    "type": "CIRCLE",
+    "symbol": "130625000013130000000000000000",
+    "text": "Key Terrain - Central Bridge over Põrnujõgi",
+    "coordinate": [58.589349, 25.028112],
+    "radius": "160",
+    "justification": "Chokepoint enabling control of movement between both riverbanks. Critical for maneuver, supply, and defense in depth."
+  },
+  {
+    "id": "KT002",
+    "type": "CIRCLE",
+    "symbol": "130325000016020100000000000000",
+    "text": "Key Terrain - Forested high ground WNW near Reinumurru",
+    "coordinate": [58.5965, 25.0005],
+    "radius": "240",
+    "justification": "Elevated, forested position overlooking western and central mobility corridors."
+  },
+  {
+    "id": "CC001",
+    "type": "POLYGON",
+    "symbol": "130325000016020100000000000000",
+    "text": "Cover and Concealment - Forest south of Jõesuu road",
+    "coordinates": [
+      [58.57, 25.0155],
+      [58.5692, 25.0241],
+      [58.5629, 25.0208],
+      [58.5645, 25.0123]
+    ]
+  },
+  {
+    "id": "CC002",
+    "type": "POLYGON",
+    "symbol": "130325000016020100000000000000",
+    "text": "Cover and Concealment - Patch north of Suurjõe–Kulimaa",
+    "coordinates": [
+      [58.602, 25.0395],
+      [58.5998, 25.0412],
+      [58.5975, 25.0365],
+      [58.6, 25.0355]
+    ]
+  },
+  {
+    "id": "OBST001",
+    "type": "LINE",
+    "text": "Obstacle - Põrnujõgi River System",
+    "coordinates": [
+      [58.5896614, 25.0164656],
+      [58.5902217, 25.0175397],
+      [58.5909311, 25.0188914],
+      [58.5915505, 25.0199791],
+      [58.5920123, 25.0209157],
+      [58.5930073, 25.0240226]
+    ]
+  },
+  {
+    "id": "AOA001",
+    "type": "ARROW",
+    "text": "Avenue of Approach - North to Center via 19242",
+    "coordinates": [
+      [58.6315855, 25.020831],
+      [58.6289717, 25.020907],
+      [58.6258024, 25.0209994],
+      [58.6224557, 25.0210687],
+      [58.6198326, 25.0211559],
+      [58.6147997, 25.0213164],
+      [58.6099681, 25.0214273],
+      [58.6058387, 25.021564],
+      [58.6052764, 25.0216987],
+      [58.6038455, 25.0224478],
+      [58.5987068, 25.0218513],
+      [58.5970787, 25.0226122]
+    ]
+  }
+]

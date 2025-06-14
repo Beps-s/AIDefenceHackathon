@@ -37,14 +37,14 @@ const MilitaryAttackArrow = ({
           previousPoint,
           point,
           -90,
-          weight * 200
+          weight * 100
         );
         const point_left = anglePointWithDistance(
           map,
           nextPoint,
           point,
           90,
-          weight * 200
+          weight * 100
         );
         points.push(centerLatLng(point_right, point_left));
       } else if (previousPoint != null) {
@@ -53,7 +53,7 @@ const MilitaryAttackArrow = ({
             map,
             previousPoint,
             point,
-            i != positions.length - 1 ? 90 : -90,
+            i !== positions.length - 1 ? 90 : -90,
             weight * 100
           )
         );
@@ -63,7 +63,7 @@ const MilitaryAttackArrow = ({
             map,
             nextPoint,
             point,
-            i != positions.length - 1 ? 90 : -90,
+            i !== positions.length - 1 ? 90 : -90,
             weight * 100
           )
         );
@@ -119,33 +119,33 @@ const MilitaryAttackArrow = ({
           previousPoint,
           point,
           -90,
-          weight * 200
+          weight * 100
         );
         const point_left = anglePointWithDistance(
           map,
           nextPoint,
           point,
           90,
-          weight * 200
+          weight * 100
         );
         points.push(centerLatLng(point_right, point_left));
-      } else if (previousPoint != null) {
+      } else if (previousPoint !== null) {
         points.push(
           anglePointWithDistance(
             map,
             previousPoint,
             point,
-            i != positions.length - 1 ? -90 : 90,
+            i !== positions.length - 1 ? -90 : 90,
             weight * 100
           )
         );
-      } else if (nextPoint != null)
+      } else if (nextPoint !== null)
         points.push(
           anglePointWithDistance(
             map,
             nextPoint,
             point,
-            i != positions.length - 1 ? -90 : 90,
+            i !== positions.length - 1 ? -90 : 90,
             weight * 100
           )
         );
@@ -162,7 +162,7 @@ const MilitaryAttackArrow = ({
         weight={8}
         positions={getArrowPathPoints()}
       >
-        {text != "" ? (
+        {text !== "" ? (
           <Tooltip
             direction="center"
             position={positions[positions.length - 2]}

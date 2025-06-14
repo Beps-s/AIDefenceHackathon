@@ -17,6 +17,8 @@ import L from "leaflet";
 import SymbolMarker from "./extended/SymbolMarker";
 import MilitaryAttackArrow from "./extended/MilitaryAttackArrow";
 import { postQuery, constructQuery } from "../api/overpassApi.ts";
+import { centroid } from "../util.ts";
+import exampleData from "../assets/example.json";
 
 const MiniMapWrapper = () => {
   const map = useMap();
@@ -24,16 +26,13 @@ const MiniMapWrapper = () => {
 };
 
 const MapDrawRectangle = () => {
+  const [loading, setLoading] = useState(false);
   const featureGroupRef = useRef(null);
   const [geoJson, setGeoJson] = useState(null);
   const [queryData, setQueryData] = useState(null);
   const [croppedImage, setCroppedImage] = useState(null);
   const [imageSize, setImageSize] = useState(null);
   const [featureData, setFeatureData] = useState(null);
-
-  useEffect(() => {
-    getRoadData();
-  }, [geoJson]);
 
   const getRoadData = async () => {
     if (geoJson) {
@@ -47,24 +46,23 @@ const MapDrawRectangle = () => {
       setQueryData(response.queryResponse);
     }
   };
+
+  // on geojson state change
   useEffect(() => {
-    fetch("example.json")
-      .then((response) => response.json())
-      .then((data) => setFeatureData(data));
-  }, []);
+    if (geoJson) {
+      getRoadData();
+      setFeatureData(exampleData);
+    }
+  }, [geoJson]);
 
   const parseTacticalJson = () => {
     if (featureData == null) return;
     const features = [];
-    featureData.map((feature) => {
-      if (
-        feature.type === "POLYGON" ||
-        feature.type === "LINE" ||
-        feature.type === "ARROW"
-      )
+    featureData.map((feature, index) => {
+      if (feature.type === "LINE" || feature.type === "ARROW")
         features.push(
           <MilitaryAttackArrow
-            key={feature.id}
+            key={`${index} ${feature.text}`}
             positions={feature.coordinates}
             weight={0.5}
             text={feature.text}
@@ -73,19 +71,25 @@ const MapDrawRectangle = () => {
       if (feature.type === "POLYGON")
         features.push(
           <Polygon
-            key={feature.id}
+            key={`${index} ${feature.text}`}
             positions={feature.coordinates}
             color="blue"
-          />
+          >
+            {(feature.symbol) ? <SymbolMarker position={centroid(feature.coordinates)} code={feature.symbol}/> : null}
+            <Tooltip className="feature-text" direction="center">
+              <span>{feature.text}</span>
+            </Tooltip>
+          </Polygon>
         );
       if (feature.type === "CIRCLE")
         features.push(
           <Circle
-            key={feature.id}
+            key={`${index} ${feature.text}`}
             center={feature.coordinate}
             radius={feature.radius}
             text="test"
           >
+            {(feature.symbol) ? <SymbolMarker position={feature.coordinate} code={feature.symbol}/> : null}
             <Tooltip className="feature-text" direction="center">
               <span>{feature.text}</span>
             </Tooltip>
@@ -94,9 +98,10 @@ const MapDrawRectangle = () => {
       if (feature.type === "SYMBOL")
         features.push(
           <SymbolMarker
-            key={feature.id}
+            key={`${index} ${feature.name}`}
             position={feature.coordinate}
             text={feature.text}
+            code={feature.code}
           />
         );
     });
@@ -257,11 +262,14 @@ const MapDrawRectangle = () => {
           background: "white",
           padding: "0.5em",
           borderRadius: "4px",
+          boxShadow: "0 0 8px black",
+          marginLeft: "40%"
         }}
       >
-        Draw a Rectangle
+        Select an area
       </h2>
       <MapContainer
+        loading={loading}
         zoom={14}
         style={{ height: "100%", width: "100%" }}
         maxBounds={[

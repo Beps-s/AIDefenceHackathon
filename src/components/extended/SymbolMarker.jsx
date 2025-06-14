@@ -2,20 +2,25 @@ import ms from "milsymbol";
 import { Marker, Tooltip } from "react-leaflet";
 import L from "leaflet";
 
-const symbol = new ms.Symbol("13031200000000000000", {
-  size: 24,
-}).asSVG();
 
-const icon = L.divIcon({
-  html: `
-    <svg>${symbol}</svg>
-    `,
-});
 
-const SymbolMarker = ({ position, text }) => {
+const SymbolMarker = ({ position, text, code }) => {
+  const symbol = new ms.Symbol((code) ? code : "13031200000000000000", {
+    size: 24,
+  }).asSVG();
+
+  const icon = L.divIcon({
+    iconAnchor: [12, 20],
+    iconSize: 0,
+    iconUrl: "",
+    html: `
+      <svg>${symbol}</svg>
+      `,
+  });
+
   return (
     <Marker icon={icon} position={position} >
-      <Tooltip offset={[0, 0]}>{text}</Tooltip>
+      {(text) ? <Tooltip offset={[0, 0]}>{text}</Tooltip> : null}
     </Marker>
   );
 };

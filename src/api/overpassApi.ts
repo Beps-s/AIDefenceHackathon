@@ -33,12 +33,12 @@ export const constructQuery = (boundary: string): string => {
 };
 
 export const postQuery = async (query: string): Promise<QueryResponse> => {
-  /*
+  
   console.group("Overpass Query");
   console.warn("Started Query");
   console.debug(query);
   console.time();
-  */
+  
 
   var result = await fetch("https://overpass-api.de/api/interpreter", {
     method: "POST",
@@ -46,11 +46,11 @@ export const postQuery = async (query: string): Promise<QueryResponse> => {
     body: "data=" + encodeURIComponent(query),
   }).then((data) => data.json());
 
-  /*
+  
   console.timeEnd();
   console.log(JSON.stringify(result, null, 2));
   console.groupEnd();
-  */
+  
 
   return {
     queryResponse: JSON.stringify(result, null, 2),
