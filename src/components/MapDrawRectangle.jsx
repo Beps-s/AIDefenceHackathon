@@ -49,8 +49,8 @@ const MapDrawRectangle = () => {
           Authorization: `Bearer `,
         },
         body: JSON.stringify({
-          model: "gpt-4.1",
-          messages: [
+          model: "gpt-4.1-mini",
+          input: [
             {
               role: "system",
               content: `Act as a military terrain analysis expert specializing in the OCOKA framework. Your primary task is to analyze imagery provided by the user and output relevant OCOKA features as structured JSON objects.
@@ -134,11 +134,8 @@ Use geographic and tactical terminology with precision. Minimize textual explana
               role: "user",
               content: [
                 {
-                  type: "image_url",
-                  image_url: {
-                    url: `data:image/jpeg;base64,${croppedImage}`,
-                    detail: "high",
-                  },
+                  type: "input_image",
+                  image_url: `${croppedImage}`,
                 },
               ],
             },
@@ -151,6 +148,8 @@ Use geographic and tactical terminology with precision. Minimize textual explana
       const data = await response.json();
       setResponse(data);
       console.log("API response:", data);
+      const mapData = data.output[0].content[0].text;
+      console.log("API response:", mapData);
     } catch (error) {
       console.error("API request failed:", error);
       throw error;
@@ -171,6 +170,12 @@ Use geographic and tactical terminology with precision. Minimize textual explana
       setQueryData(response);
     }
   };
+
+  useEffect(() => {
+    if (croppedImage && imageSize) {
+      apiRequest();
+    }
+  }, [croppedImage, imageSize]);
 
   // on geojson state change
   useEffect(() => {
@@ -290,99 +295,6 @@ Use geographic and tactical terminology with precision. Minimize textual explana
         width,
         height
       );
-
-      // --- Draw grid lines every 2000 meters ---
-      const coords = geoJson.geometry.coordinates[0];
-      const lats = coords.map((c) => c[1]);
-      const lngs = coords.map((c) => c[0]);
-
-      const minLat = Math.min(...lats);
-      const maxLat = Math.max(...lats);
-      const minLng = Math.min(...lngs);
-      const maxLng = Math.max(...lngs);
-
-      const crs = map.options.crs;
-
-      const southWest = crs.project(L.latLng(minLat, minLng));
-      const northEast = crs.project(L.latLng(maxLat, maxLng));
-
-      const spacing = 2000; // meters grid spacing
-
-      // Vertical lines at every spacing meters (x values)
-      const verticalLines = [];
-      for (let x = southWest.x; x <= northEast.x; x += spacing) {
-        verticalLines.push(x);
-      }
-
-      // Horizontal lines at every spacing meters (y values)
-      const horizontalLines = [];
-      for (let y = southWest.y; y <= northEast.y; y += spacing) {
-        horizontalLines.push(y);
-      }
-
-      // Convert vertical lines to latLng pairs (bottom to top)
-      const verticalLatLngLines = verticalLines.map((x) => [
-        crs.unproject(L.point(x, southWest.y)),
-        crs.unproject(L.point(x, northEast.y)),
-      ]);
-
-      // Convert horizontal lines to latLng pairs (left to right)
-      const horizontalLatLngLines = horizontalLines.map((y) => [
-        crs.unproject(L.point(southWest.x, y)),
-        crs.unproject(L.point(northEast.x, y)),
-      ]);
-
-      // Helper: convert latLng line to pixel points relative to crop
-      function latLngLineToPixel(line) {
-        return line.map((latlng) => map.latLngToContainerPoint(latlng));
-      }
-
-      const verticalPixelLines = verticalLatLngLines.map((line) => {
-        const pts = latLngLineToPixel(line);
-        return pts.map((p) => ({ x: p.x - topLeft.x, y: p.y - topLeft.y }));
-      });
-
-      const horizontalPixelLines = horizontalLatLngLines.map((line) => {
-        const pts = latLngLineToPixel(line);
-        return pts.map((p) => ({ x: p.x - topLeft.x, y: p.y - topLeft.y }));
-      });
-
-      // Draw grid lines
-      ctx.strokeStyle = "rgba(0,0,0,0.5)";
-      ctx.lineWidth = 1;
-
-      verticalPixelLines.forEach((line) => {
-        ctx.beginPath();
-        ctx.moveTo(line[0].x, line[0].y);
-        ctx.lineTo(line[1].x, line[1].y);
-        ctx.stroke();
-      });
-
-      horizontalPixelLines.forEach((line) => {
-        ctx.beginPath();
-        ctx.moveTo(line[0].x, line[0].y);
-        ctx.lineTo(line[1].x, line[1].y);
-        ctx.stroke();
-      });
-
-      // --- Draw coordinates at grid intersections ---
-      ctx.fillStyle = "black";
-      ctx.font = "10px Arial";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "top";
-
-      verticalLines.forEach((xMeter) => {
-        horizontalLines.forEach((yMeter) => {
-          const latLng = crs.unproject(L.point(xMeter, yMeter));
-          const point = map.latLngToContainerPoint(latLng);
-          const px = point.x - topLeft.x;
-          const py = point.y - topLeft.y;
-          const label = `${latLng.lat.toFixed(4)}, ${latLng.lng.toFixed(4)}`;
-          ctx.fillText(label, px + 3, py + 3);
-        });
-      });
-
-      // --- End coordinate labels ---
 
       const croppedImageDataURL = croppedCanvas.toDataURL("image/png");
       setCroppedImage(croppedImageDataURL);
