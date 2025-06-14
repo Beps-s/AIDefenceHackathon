@@ -264,7 +264,7 @@ const MapDrawRectangle = () => {
           background: "white",
           padding: "0.5em",
           borderRadius: "4px",
-          boxShadow: "0 0 8px black",
+          boxShadow: "0 0 4px gray",
           marginLeft: "40%"
         }}
       >
@@ -335,10 +335,11 @@ const MapDrawRectangle = () => {
         <div
           style={{
             position: "absolute",
-            bottom: 80,
-            left: 10,
+            bottom: 60,
+            left: "38%",
             zIndex: 1000,
             background: "rgba(255,255,255,0.8)",
+            boxShadow: "0 0 4px gray",
             padding: "0.5em 1em",
             borderRadius: "4px",
             fontSize: "14px",

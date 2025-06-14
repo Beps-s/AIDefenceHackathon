@@ -25,7 +25,7 @@ export const constructQuery = (boundary: string): string => {
   const query = `
   [out:json][maxsize:${maxSize}][timeout:${timeout}];
   (
-    ${QueryTypes.tertiary}(poly:"${boundary}");
+    way["highway"~"^(motorway|trunk|pedestrian|primary|secondary|tertiary|unclassified|service|residential|living_street)$"](poly:"${boundary}");
   );
   out geom;
   `;
@@ -45,15 +45,20 @@ export const postQuery = async (query: string): Promise<any> => {
     method: "POST",
     // The body contains the query
     body: "data=" + encodeURIComponent(query),
-  }).then((data) => data.json());
+  }).then((data) => data.json())
+  .catch((error) => {
+    console.log(error)
+    return null;
+  });
 
   console.timeEnd();
+
   /*
   console.log(JSON.stringify(result, null, 2));
   console.groupEnd();
   */
-
-  return result;
+  
+  return (result.elements.length != 0) ? result : null;
 };
 
 export const snapJsonCoordinates = (
