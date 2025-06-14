@@ -1,3 +1,4 @@
+import { Polygon } from "leaflet";
 import { LatLngExpression, LatLngLiteral } from "leaflet";
 import GeometryUtil from "leaflet-geometryutil";
 
@@ -62,39 +63,23 @@ export function getNearestPointViaElementsArray(map, elements: any[], point: Lat
   return { lat: nearestPoint.lat, lng: nearestPoint.lon};
 }
 
-/*
-export function smoothPolygon(polygon_vertices, num_iterations = 3, smoothing_factor = 1.0) {
-    let smoothed_vertices = polygon_vertices;
-    let num_vertices = smoothed_vertices.length;
+export function getRandomPointsInPolygon(points: LatLngExpression[], amount: number): LatLngTuble[] {
+  const polygon = new Polygon(points);
+  var bounds = polygon.getBounds();
 
-    for (let iter = 0; 0 < num_iterations; iter++) {
-        let temp_vertices: any[] = []
-        for (let i = 0; i < num_vertices - 1; i++) {
-          console.log((i));
-          
-            let prev_index = (i - 1 + num_vertices) % num_vertices
-            let next_index = (i + 1) % num_vertices
+  // bounds
+  var x_max = bounds.getEast();
+  var x_min = bounds.getWest();
+  var y_max = bounds.getSouth();
+  var y_min = bounds.getNorth();
+  
+  let randomPoints: LatLngTuble = [];
+  for (const i of Array(amount).keys()) {
+    // random latitude & longitude
+    var lat = x_min + (Math.random() * (x_max - x_min));
+    var lng = y_min + (Math.random() * (y_max - y_min));
+    randomPoints.push([ lat, lng ]);
+  }
 
-            let current_vertex = smoothed_vertices[i]
-            let prev_vertex = smoothed_vertices[prev_index]
-            let next_vertex = smoothed_vertices[next_index]
-
-            // Calculate the target position (average of neighbors, or self + neighbors)
-            // This is a simple 3-point average including the current point
-            // For pure Laplacian, it's often just the average of neighbors.
-            let target_x = (prev_vertex.lat + current_vertex.lat + next_vertex.lat) / 3.0
-            let target_y = (prev_vertex.lng + current_vertex.lng + next_vertex.lng) / 3.0
-
-            // Apply smoothing factor to control how much the point moves towards the target
-            let new_x = current_vertex.lat + (target_x - current_vertex.lat) * smoothing_factor
-            let new_y = current_vertex.lng + (target_y - current_vertex.lng) * smoothing_factor
-
-            temp_vertices.push([new_x, new_y])
-            }
-            
-        smoothed_vertices = temp_vertices
-      }
-
-    return smoothed_vertices
+  return randomPoints;
 }
-*/

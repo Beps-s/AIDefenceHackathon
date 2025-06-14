@@ -25,7 +25,7 @@ export const constructQuery = (boundary: string): string => {
   const query = `
   [out:json][maxsize:${maxSize}][timeout:${timeout}];
   (
-    way["highway"~"^(motorway|trunk|pedestrian|primary|secondary|tertiary|unclassified|service|residential|living_street)$"](poly:"${boundary}");
+    way["highway"="tertiary"](poly:"${boundary}");
   );
   out geom;
   `;

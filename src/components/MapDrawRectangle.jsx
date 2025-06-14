@@ -16,7 +16,7 @@ import leafletImage from "leaflet-image";
 import SymbolMarker from "./extended/SymbolMarker";
 import MilitaryAttackArrow from "./extended/MilitaryAttackArrow";
 import { postQuery, constructQuery, snapJsonCoordinates } from "../api/overpassApi.ts";
-import { centroid } from "../util.ts";
+import { centroid, getRandomPointsInPolygon } from "../util.ts";
 import exampleData from "../assets/example.json";
 import openaiApi from "../api/openaiApi.ts";
 import meteoApi from "../api/meteoApi.ts";
@@ -62,7 +62,8 @@ const MapDrawRectangle = () => {
 
   useEffect(() => {
     if (croppedImage && imageSize) {
-      apiRequest();
+      //const randomHeightPoints = meteoApi.getElevetion(getRandomPointsInPolygon(geoJson.geometry.coordinates, 4));
+      //apiRequest();
     }
   }, [croppedImage, imageSize]);
 
@@ -72,7 +73,7 @@ const MapDrawRectangle = () => {
       getRoadData();
       setFeatureData(response);
     }
-  }, [response]);
+  }, [geoJson]);
 
   const parseTacticalJson = () => {
     if (featureData == null) return;
