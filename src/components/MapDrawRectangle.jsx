@@ -34,7 +34,129 @@ const MapDrawRectangle = () => {
   const [queryData, setQueryData] = useState(null);
   const [croppedImage, setCroppedImage] = useState(null);
   const [imageSize, setImageSize] = useState(null);
+  const [imageSizeCoord, setImageSizeCoord] = useState(null);
   const [featureData, setFeatureData] = useState(null);
+
+  const [response, setResponse] = useState(null);
+
+  const apiRequest = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("https://api.openai.com/v1/responses", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer `,
+        },
+        body: JSON.stringify({
+          model: "gpt-4.1-mini",
+          input: [
+            {
+              role: "system",
+              content: `Act as a military terrain analysis expert specializing in the OCOKA framework. Your primary task is to analyze imagery provided by the user and output relevant OCOKA features as structured JSON objects.
+OCOKA stands for:
+- Observation and Fields of Fire
+- Cover and Concealment
+- Obstacles (man-made and natural)
+- Key Terrain
+- Avenues of Approach
+
+You do not return a written OCOKA report, but instead extract and convert the visual and spatial information into structured coordinate-based outputs. The map or image you receive may contain terrain markings, symbols, or features relevant to military analysis. You must interpret these and generate a JSON array, where each entry describes a feature with:
+- type (e.g. SYMBOL, ARROW, CIRCLE, POLYGON, LINE)
+- coordinate or coordinates in the format [latitude, longitude]
+- optional properties like radius for circular features
+
+Avoid assumptions about terrain features—only describe elements that are clearly visible or explicitly indicated. Emphasize identifying and annotating avenues of approach and key terrain.
+
+Limit the output to **a maximum of 2 avenues of approach**, both originating from the **same general direction** (quarter), targeting the **main key terrain feature** — the one whose loss would be most detrimental. All analysis and justification should center on **targeting that single critical key terrain point**.
+
+Image resolution: ${imageSize.width} (X axis, left-to-right) × ${imageSize.height} (Y axis, top-to-bottom)
+Geographic anchors:
+   – Top-left pixel (0, 0):   lat 58.613028   lon 24.971329  
+   – Bottom-right pixel (1166, 809): lat 58.576800   lon 25.071513  
+
+Pre-computed deltas (use verbatim – dont round):  
+   Δlat = 58.576800 – 58.613028 = -0.036228  
+   Δlon = 25.071513 – 24.971329 = +0.100184  
+
+Conversion formula for any pixel position (x, y):  
+   lat = 58.613028 + (y / 810) · (-0.036228)  
+   lon = 24.971329 + (x / 1167)· (+0.100184)  
+
+To calculate the coordinates please use linear interpolation using the bounds you are given.
+Y increases southward; X increases eastward.  
+
+When determining key terrain, consider any terrain feature (natural or manmade) which, if controlled, provides a marked advantage. Key terrain may:
+- Serve as objectives or battle positions
+- Be echelon, mission, or enemy-situation dependent
+- Be controlled via fires or maneuver, not necessarily occupied
+
+Prioritize clarity, precision, and correct OCOKA categorization for every feature you describe. Use correct military terminology and retain accurate coordinates.
+
+Your OCOKA responsibilities include:
+
+**Observation and Fields of Fire**
+- Identify elevated positions or clear lines of sight.
+- Mark observation posts or firing lines using type: SYMBOL or type: ARROW.
+- Analyze visibility (line-of-sight), high ground, and dominant positions.
+- Describe environmental conditions (e.g., weather, lighting) impacting observation.
+
+**Cover and Concealment**
+- Detect natural (e.g., forests, ditches) or artificial (e.g., buildings, walls) areas providing protection.
+- Represent these with type: CIRCLE or type: POLYGON.
+- Consider variability across movement routes or times of day.
+
+**Obstacles**
+- Highlight natural (e.g., rivers, ravines) and man-made (e.g., fences, minefields) barriers to movement.
+- Mark with type: POLYGON or type: LINE.
+- Differentiate between existing, reinforcing, and concealed obstacles.
+- Consider how obstacles may be used offensively or defensively.
+
+**Key Terrain**
+- Identify positions offering tactical advantage if controlled.
+- Use type: SYMBOL with "text": "Key Terrain" and include a concise justification.
+- Consider effects on movement, communications, supply, and command.
+- Include decisive terrain essential to mission success.
+
+**Avenues of Approach**
+- Outline **no more than 2 viable paths**, both **originating from the same quarter** (e.g. NW, NE, etc).
+- Represent with type: ARROW and multiple coordinates indicating direction.
+- Ensure both paths converge or focus on the **primary key terrain point**.
+- Evaluate terrain for different unit types (infantry, mechanized).
+- Include mobility corridors, chokepoints, ambush points, and flanking routes.
+
+Use geographic and tactical terminology with precision. Minimize textual explanations and focus on detailed, justified JSON output for each clearly visible feature.
+
+**Coordinate Format Requirement:**
+- All coordinate outputs must use the format [latitude, longitude] (e.g., [58.592, 25.002]).`,
+            },
+            {
+              role: "user",
+              content: [
+                {
+                  type: "input_image",
+                  image_url: `${croppedImage}`,
+                },
+              ],
+            },
+          ],
+        }),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setResponse(data);
+      console.log("API response:", data);
+      const mapData = data.output[0].content[0].text;
+      console.log("API response:", mapData);
+    } catch (error) {
+      console.error("API request failed:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getRoadData = async () => {
     if (geoJson) {
@@ -48,6 +170,12 @@ const MapDrawRectangle = () => {
       setQueryData(response);
     }
   };
+
+  useEffect(() => {
+    if (croppedImage && imageSize) {
+      apiRequest();
+    }
+  }, [croppedImage, imageSize]);
 
   // on geojson state change
   useEffect(() => {
@@ -77,7 +205,12 @@ const MapDrawRectangle = () => {
             positions={feature.coordinates}
             color="blue"
           >
-            {(feature.symbol) ? <SymbolMarker position={centroid(feature.coordinates)} code={feature.symbol}/> : null}
+            {feature.symbol ? (
+              <SymbolMarker
+                position={centroid(feature.coordinates)}
+                code={feature.symbol}
+              />
+            ) : null}
             <Tooltip className="feature-text" direction="center">
               <span>{feature.text}</span>
             </Tooltip>
@@ -91,7 +224,12 @@ const MapDrawRectangle = () => {
             radius={feature.radius}
             text="test"
           >
-            {(feature.symbol) ? <SymbolMarker position={feature.coordinate} code={feature.symbol}/> : null}
+            {feature.symbol ? (
+              <SymbolMarker
+                position={feature.coordinate}
+                code={feature.symbol}
+              />
+            ) : null}
             <Tooltip className="feature-text" direction="center">
               <span>{feature.text}</span>
             </Tooltip>
@@ -117,6 +255,15 @@ const MapDrawRectangle = () => {
     drawnItems.addLayer(layer);
     const geoJson = layer.toGeoJSON();
     setGeoJson(geoJson);
+
+    const coordinates = geoJson.geometry.coordinates[0];
+
+    const lats = coordinates.map(([lng, lat]) => lat);
+    const lngs = coordinates.map(([lng, lat]) => lng);
+
+    const topLeft = [Math.min(...lngs), Math.max(...lats)];
+    const bottomRight = [Math.max(...lngs), Math.min(...lats)];
+    setImageSizeCoord({ topLeft, bottomRight });
 
     const bounds = layer.getBounds();
     const map = layer._map;
@@ -148,99 +295,6 @@ const MapDrawRectangle = () => {
         width,
         height
       );
-
-      // --- Draw grid lines every 2000 meters ---
-      const coords = geoJson.geometry.coordinates[0];
-      const lats = coords.map((c) => c[1]);
-      const lngs = coords.map((c) => c[0]);
-
-      const minLat = Math.min(...lats);
-      const maxLat = Math.max(...lats);
-      const minLng = Math.min(...lngs);
-      const maxLng = Math.max(...lngs);
-
-      const crs = map.options.crs;
-
-      const southWest = crs.project(L.latLng(minLat, minLng));
-      const northEast = crs.project(L.latLng(maxLat, maxLng));
-
-      const spacing = 2000; // meters grid spacing
-
-      // Vertical lines at every spacing meters (x values)
-      const verticalLines = [];
-      for (let x = southWest.x; x <= northEast.x; x += spacing) {
-        verticalLines.push(x);
-      }
-
-      // Horizontal lines at every spacing meters (y values)
-      const horizontalLines = [];
-      for (let y = southWest.y; y <= northEast.y; y += spacing) {
-        horizontalLines.push(y);
-      }
-
-      // Convert vertical lines to latLng pairs (bottom to top)
-      const verticalLatLngLines = verticalLines.map((x) => [
-        crs.unproject(L.point(x, southWest.y)),
-        crs.unproject(L.point(x, northEast.y)),
-      ]);
-
-      // Convert horizontal lines to latLng pairs (left to right)
-      const horizontalLatLngLines = horizontalLines.map((y) => [
-        crs.unproject(L.point(southWest.x, y)),
-        crs.unproject(L.point(northEast.x, y)),
-      ]);
-
-      // Helper: convert latLng line to pixel points relative to crop
-      function latLngLineToPixel(line) {
-        return line.map((latlng) => map.latLngToContainerPoint(latlng));
-      }
-
-      const verticalPixelLines = verticalLatLngLines.map((line) => {
-        const pts = latLngLineToPixel(line);
-        return pts.map((p) => ({ x: p.x - topLeft.x, y: p.y - topLeft.y }));
-      });
-
-      const horizontalPixelLines = horizontalLatLngLines.map((line) => {
-        const pts = latLngLineToPixel(line);
-        return pts.map((p) => ({ x: p.x - topLeft.x, y: p.y - topLeft.y }));
-      });
-
-      // Draw grid lines
-      ctx.strokeStyle = "rgba(0,0,0,0.5)";
-      ctx.lineWidth = 1;
-
-      verticalPixelLines.forEach((line) => {
-        ctx.beginPath();
-        ctx.moveTo(line[0].x, line[0].y);
-        ctx.lineTo(line[1].x, line[1].y);
-        ctx.stroke();
-      });
-
-      horizontalPixelLines.forEach((line) => {
-        ctx.beginPath();
-        ctx.moveTo(line[0].x, line[0].y);
-        ctx.lineTo(line[1].x, line[1].y);
-        ctx.stroke();
-      });
-
-      // --- Draw coordinates at grid intersections ---
-      ctx.fillStyle = "black";
-      ctx.font = "10px Arial";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "top";
-
-      verticalLines.forEach((xMeter) => {
-        horizontalLines.forEach((yMeter) => {
-          const latLng = crs.unproject(L.point(xMeter, yMeter));
-          const point = map.latLngToContainerPoint(latLng);
-          const px = point.x - topLeft.x;
-          const py = point.y - topLeft.y;
-          const label = `${latLng.lat.toFixed(4)}, ${latLng.lng.toFixed(4)}`;
-          ctx.fillText(label, px + 3, py + 3);
-        });
-      });
-
-      // --- End coordinate labels ---
 
       const croppedImageDataURL = croppedCanvas.toDataURL("image/png");
       setCroppedImage(croppedImageDataURL);
