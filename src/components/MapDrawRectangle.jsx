@@ -39,7 +39,8 @@ const MapDrawRectangle = () => {
 
   const apiRequest = async () => {
     setLoading(true);
-    openaiApi.getResponse(croppedImage, imageSize);
+    const response2 = await openaiApi.getResponse(croppedImage, imageSize);
+    setResponse(response2);
     setLoading(false);
   };
 
@@ -66,9 +67,9 @@ const MapDrawRectangle = () => {
   useEffect(() => {
     if (geoJson) {
       getRoadData();
-      setFeatureData(exampleData);
+      setFeatureData(response);
     }
-  }, [geoJson]);
+  }, [response]);
 
   const parseTacticalJson = () => {
     if (featureData == null) return;
@@ -78,7 +79,7 @@ const MapDrawRectangle = () => {
         features.push(
           <MilitaryAttackArrow
             key={`${index} ${feature.text}`}
-            positions={snapJsonCoordinates(map, queryData, feature.coordinates)}
+            positions={feature.coordinates}
             weight={0.5}
             text={feature.text}
           />
@@ -203,8 +204,8 @@ const MapDrawRectangle = () => {
           background: "white",
           padding: "0.5em",
           borderRadius: "4px",
-          boxShadow: "0 0 4px gray",
-          marginLeft: "40%"
+          boxShadow: "0 0 8px black",
+          marginLeft: "40%",
         }}
       >
         Select an area
@@ -229,7 +230,7 @@ const MapDrawRectangle = () => {
           minZoom={14}
           maxZoom={16}
         />
-        {(queryData) ? parseTacticalJson() : null}
+        {(response) ? parseTacticalJson() : null}
         <FeatureGroup ref={featureGroupRef}>
           <EditControl
             position="topright"
